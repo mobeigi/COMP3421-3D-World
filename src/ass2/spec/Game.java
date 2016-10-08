@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLJPanel;
 import javax.swing.JFrame;
+
+import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.util.FPSAnimator;
 
 
@@ -59,26 +61,28 @@ public class Game extends JFrame implements GLEventListener{
 
 	@Override
 	public void display(GLAutoDrawable drawable) {
-		// TODO Auto-generated method stub
-		
+		GL2 gl = drawable.getGL().getGL2();
+    
 	}
-
+  
 	@Override
 	public void dispose(GLAutoDrawable drawable) {
 		// TODO Auto-generated method stub
-		
+    // TODO: Probably do not need
 	}
 
 	@Override
 	public void init(GLAutoDrawable drawable) {
-		// TODO Auto-generated method stub
-		
+		GL2 gl = drawable.getGL().getGL2();
+    
+    //Background colour
+    gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //white
 	}
 
 	@Override
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width,
 			int height) {
-		// TODO Auto-generated method stub
-		
+
+    
 	}
 }
