@@ -31,6 +31,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   
   //Constants
   private static final double FIELD_OF_VIEW = 60.0; //field of view to use in world
+  private static final double MAXIMUM_FIELD_OF_VIEW = 180.0; //max possible value for field of view
   private static final double ALTITUDE_OFFSET = 0.5; //camera offset from ground so world is visible
   private static final double WALKING_SPEED = 0.1; //speed at which player (camera) moves at
   private static final double CAMERA_ROTATION_STEP = 10; //number of degrees to rotate camera by
@@ -136,8 +137,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     
     this.width = width;
     this.height = height;
-    double aspectRatio = width / height;
-    double fieldOfView = aspectRatio * FIELD_OF_VIEW;
+    double aspectRatio = (double)width / (double)height;
+    double fieldOfView = Math.min(aspectRatio * FIELD_OF_VIEW, MAXIMUM_FIELD_OF_VIEW);
+    
     glu.gluPerspective(fieldOfView, aspectRatio, 0.01d, 10000d);
   }
   
@@ -154,8 +156,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     gl.glLoadIdentity();
     
     //We will use gluPerspective to obtain a perspective camera
-    double aspectRatio = width / height;
-    double fieldOfView = aspectRatio * FIELD_OF_VIEW;
+    double aspectRatio = (double)width / (double)height;
+    double fieldOfView = Math.min(aspectRatio * FIELD_OF_VIEW, MAXIMUM_FIELD_OF_VIEW);
     
     //set near,far so they show everything for all sample terrains of size without clipping
     glu.gluPerspective(fieldOfView, aspectRatio, 0.01d, 10000d);
