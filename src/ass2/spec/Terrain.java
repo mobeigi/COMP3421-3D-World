@@ -253,7 +253,9 @@ public class Terrain {
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
   
     //Draw all trees part of terrain
-    //TODO
+    for (Tree t : myTrees) {
+      t.draw(gl);
+    }
     
     //Draw all roads part of terrain
     //TODO
