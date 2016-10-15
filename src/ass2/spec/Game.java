@@ -123,8 +123,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     gl.glEnable(GL2.GL_BACK);
     */
     
-    gl.glEnable(GL2.GL_LIGHTING); //enable lighting
-    gl.glEnable(GL2.GL_LIGHT1); //skip light0 and use first standard light
+    //gl.glEnable(GL2.GL_LIGHTING); //enable lighting
+    //gl.glEnable(GL2.GL_LIGHT1); //skip light0 and use first standard light
   }
   
   @Override

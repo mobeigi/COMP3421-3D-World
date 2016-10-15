@@ -29,7 +29,7 @@ public class Tree {
   public void draw(GL2 gl) {
     gl.glPushMatrix();
   
-    GLUT glut = new GLUT(); //use GLUT to make construct tree
+    GLUT glut = new GLUT(); //use GLUT to construct tree, benefit is normals set for us
     
     gl.glPushMatrix();
     {

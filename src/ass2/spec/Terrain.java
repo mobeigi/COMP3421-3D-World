@@ -203,7 +203,7 @@ public class Terrain {
    * @param z
    */
   public void addRoad(double width, double[] spine) {
-    Road road = new Road(width, spine);
+    Road road = new Road(width, spine, this);
     myRoads.add(road);
   }
   
@@ -227,6 +227,7 @@ public class Terrain {
         //Draw first triangle in grid
         gl.glBegin(GL2.GL_TRIANGLES);
         {
+          gl.glColor3f(0.0f, 1.0f, 0.0f); //TODO: Remove, green grass
           gl.glVertex3dv(v1, 0);
           gl.glVertex3dv(v2, 0);
           gl.glVertex3dv(v3, 0);
@@ -243,6 +244,7 @@ public class Terrain {
         //Draw second triangle in grid
         gl.glBegin(GL2.GL_TRIANGLES);
         {
+          gl.glColor3f(0.0f, 1.0f, 0.0f); //TODO: Remove, green grass
           gl.glVertex3dv(v4, 0);
           gl.glVertex3dv(v5, 0);
           gl.glVertex3dv(v6, 0);
@@ -252,14 +254,16 @@ public class Terrain {
     }
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
   
+  
     //Draw all trees part of terrain
-    for (Tree t : myTrees) {
-      t.draw(gl);
+    for (Tree tree : myTrees) {
+      tree.draw(gl);
     }
     
     //Draw all roads part of terrain
-    //TODO
+    for (Road road : myRoads) {
+      road.draw(gl);
+    }
   }
-  
   
 }
