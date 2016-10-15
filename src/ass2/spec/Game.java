@@ -94,11 +94,11 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     //Setup camera
     setupCamera(gl);
     
+    //Setup Sunlight
+    setupSun(gl);
+    
     //Draw terrain
     myTerrain.draw(gl);
-    
-    
-    
   }
   
   @Override
@@ -123,8 +123,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     gl.glEnable(GL2.GL_BACK);
     */
     
-    //gl.glEnable(GL2.GL_LIGHTING); //enable lighting
-    //gl.glEnable(GL2.GL_LIGHT1); //skip light0 and use first standard light
+    gl.glEnable(GL2.GL_LIGHTING); //enable lighting
+    gl.glEnable(GL2.GL_LIGHT1); //skip light0 and use first standard light
   }
   
   @Override
@@ -180,6 +180,35 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     
     gl.glPopMatrix();
   }
+  
+  /**
+   * Setup Sun as light source
+   *
+   * @param gl GL2 object
+   */
+  private void setupSun(GL2 gl) {
+    gl.glPushMatrix();
+    
+    //Global Ambient light
+    float[] globalAmb= {1.0f, 1.0f, 1.0f, 1.0f}; //full intensity
+    gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, globalAmb, 0);
+    
+    //Sunlight (LIGHT1)
+    float[] sunlightVector = myTerrain.getSunlight();
+    float[] finalSunlightVector = new float[4];
+    
+    finalSunlightVector[0] = sunlightVector[0];
+    finalSunlightVector[1] = sunlightVector[1];
+    finalSunlightVector[2] = sunlightVector[2];
+    finalSunlightVector[3] = 0; //for directional light
+  
+    float[] diffuseComponent = new float[]{1.0f, 1.0f, 1.0f, 1.0f}; //diffuse all light
+    gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, diffuseComponent, 0);
+    gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, sunlightVector, 0);
+    
+    gl.glPopMatrix();
+  }
+  
   
   @Override
   public void keyTyped(KeyEvent e) {

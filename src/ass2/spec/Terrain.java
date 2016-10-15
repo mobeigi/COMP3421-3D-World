@@ -210,9 +210,6 @@ public class Terrain {
   /*********************** My Code *********************/
   
   public void draw(GL2 gl) {
-    //System.out.println("Drawing terrain...");
-    
-    gl.glColor3d(1.0f, 0.0f, 0.0f); //TODO: remove when texuring
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
     
     //Draw the terrain one grid point at a time
