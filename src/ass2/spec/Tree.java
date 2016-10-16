@@ -1,7 +1,11 @@
 package ass2.spec;
 
 import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.glu.GLU;
+import com.jogamp.opengl.glu.GLUquadric;
 import com.jogamp.opengl.util.gl2.GLUT;
+import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureCoords;
 
 /**
  * COMMENT: Comment Tree 
@@ -26,25 +30,47 @@ public class Tree {
   
   
   /*********************** My Code *********************/
-  public void draw(GL2 gl) {
+  public void draw(GL2 gl, TexturePack texturePack) {
     gl.glPushMatrix();
   
-    GLUT glut = new GLUT(); //use GLUT to construct tree, benefit is normals set for us
+    GLU glu = new GLU(); //use GLU to construct tree, benefit is normals set for us, also supports texturing
     
     gl.glPushMatrix();
     {
+      //Get texture
+      Texture treeTrunk = texturePack.getTreeTrunk();
+      treeTrunk.enable(gl);
+      treeTrunk.bind(gl);
+      
       //First make the cylinder (trunk) of the tree
       gl.glTranslated(myPos[0], myPos[1] - TRUNK_INTERPOLATION_OFFSET, myPos[2]);
       gl.glRotated(-90.0, 1, 0, 0);
-      glut.glutSolidCylinder(0.05f, 0.8f, 60, 60); //TODO: optimize divisions
+      
+      GLUquadric gluQuadratic = glu.gluNewQuadric();
+      glu.gluQuadricTexture(gluQuadratic, true);
+      glu.gluQuadricNormals(gluQuadratic, GLU.GLU_SMOOTH);
+      glu.gluCylinder(gluQuadratic, 0.05f, 0.05f, 0.8f, 60, 60); //TODO: optimize divisions
+  
+      treeTrunk.disable(gl);
     }
     gl.glPopMatrix();
   
     gl.glPushMatrix();
     {
+      //Get texture
+      Texture treeLeaves = texturePack.getTreeLeaves();
+      treeLeaves.enable(gl);
+      treeLeaves.bind(gl);
+      
       //Now make the spherical top of the trees which will sit on top of the cylinder
       gl.glTranslated(myPos[0], myPos[1] + (0.8f - TRUNK_INTERPOLATION_OFFSET), myPos[2]);
-      glut.glutSolidSphere(0.25f, 60, 60); //TODO: optimize divisions
+  
+      GLUquadric gluQuadratic = glu.gluNewQuadric();
+      glu.gluQuadricTexture(gluQuadratic, true);
+      glu.gluQuadricNormals(gluQuadratic, GLU.GLU_SMOOTH);
+      glu.gluSphere(gluQuadratic, 0.25f, 60, 60); //TODO: optimize divisions
+  
+      treeLeaves.disable(gl);
     }
     gl.glPopMatrix();
     

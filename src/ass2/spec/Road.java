@@ -1,6 +1,8 @@
 package ass2.spec;
 
 import com.jogamp.opengl.GL2;
+import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureCoords;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -156,7 +158,7 @@ public class Road {
   }
   
   /*********************** My Code *********************/
-  public void draw(GL2 gl) {
+  public void draw(GL2 gl, TexturePack texturePack) {
     gl.glPushMatrix();
     
     double step = (myPoints.size() / 6.0) / DIVISION_FACTOR; //determine how many quadrants to cut road into
@@ -167,6 +169,12 @@ public class Road {
     double roadDistance = (myPoints.size() / 6.0) - (1.0/3.0) - (2 * step);
     double startingY = myTerrain.altitude(point(0.0)[0], point(0.0)[1]) + ALTITUDE_OFFSET;
   
+    //Get terrain texture
+    Texture road = texturePack.getRoad();
+    road.enable(gl);
+    road.bind(gl);
+    TextureCoords textureCoords = road.getImageTexCoords();
+    
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
     
     for (double t = 0.0; t < roadDistance; t += step) {
@@ -212,10 +220,18 @@ public class Road {
       //Draw first triangle
       gl.glBegin(GL2.GL_TRIANGLES);
       {
-        gl.glColor3f(0.9f, 0.9f, 0.9f); //TODO: Remove, black road
+        gl.glColor3f(0.9f, 0.9f, 0.9f); //Black road (does nothing if lighting enabled)
         gl.glNormal3dv(normalVector, 0); //Roads are always facing directly upwards
+        
+        double[] currentLeftTexture = {textureCoords.left(), textureCoords.bottom()};
+        double[] currentRightTexture = {textureCoords.right(), textureCoords.bottom()};
+        double[] nextRightTexture = {textureCoords.left(), textureCoords.top()};
+  
+        gl.glTexCoord2dv(currentLeftTexture, 0);
         gl.glVertex3dv(currentLeft, 0);
+        gl.glTexCoord2dv(currentRightTexture, 0);
         gl.glVertex3dv(currentRight, 0);
+        gl.glTexCoord2dv(nextRightTexture, 0);
         gl.glVertex3dv(nextRight, 0);
       }
       gl.glEnd();
@@ -223,15 +239,24 @@ public class Road {
       //Draw second triangle
       gl.glBegin(GL2.GL_TRIANGLES);
       {
-        gl.glColor3f(0.9f, 0.9f, 0.9f); //TODO: Remove, black road
+        gl.glColor3f(0.9f, 0.9f, 0.9f); //Black road (does nothing if lighting enabled)
         gl.glNormal3dv(normalVector, 0); //Roads are always facing directly upwards
+  
+        double[] currentLeftTexture = {textureCoords.left(), textureCoords.bottom()};
+        double[] nextRightTexture = {textureCoords.left(), textureCoords.top()};
+        double[] nextLeftTexture = {textureCoords.right(), textureCoords.top()};
+        
+        gl.glTexCoord2dv(currentLeftTexture, 0);
         gl.glVertex3dv(currentLeft, 0);
+        gl.glTexCoord2dv(nextRightTexture, 0);
         gl.glVertex3dv(nextRight, 0);
+        gl.glTexCoord2dv(nextLeftTexture, 0);
         gl.glVertex3dv(nextLeft, 0);
       }
       gl.glEnd();
     }
   
+    road.disable(gl);
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
     
     gl.glPopMatrix();

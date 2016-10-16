@@ -4,13 +4,16 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLJPanel;
 import javax.swing.JFrame;
 
 import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.util.FPSAnimator;
-
+import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureIO;
 
 
 /**
@@ -29,12 +32,22 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   private double cameraRotation;
   private GLU glu;
   
+  //Textures
+  private TexturePack texturePack;
+  private int prevTexturePack; //Used to detemine if texture packs have changed (is reload of textures required)
+  private int curTexturePack;
+  
+  //Lighting
+  private boolean prevLighting;
+  private boolean curLighting;
+  
   //Constants
   private static final double FIELD_OF_VIEW = 60.0; //field of view to use in world
   private static final double MAXIMUM_FIELD_OF_VIEW = 180.0; //max possible value for field of view
   private static final double ALTITUDE_OFFSET = 0.5; //camera offset from ground so world is visible
   private static final double WALKING_SPEED = 0.1; //speed at which player (camera) moves at
   private static final double CAMERA_ROTATION_STEP = 10; //number of degrees to rotate camera by
+  private static final double NUM_TEXTURE_PACKS = 2; //total number of texture packs
   
   
   public Game(Terrain terrain) {
@@ -47,6 +60,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     width = 800;
     height = 600;
     glu = new GLU();
+    texturePack = new TexturePack();
+    curTexturePack = prevTexturePack = 0;
+    curLighting = prevLighting = true;
   }
   
   /**
@@ -94,11 +110,28 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     //Setup camera
     setupCamera(gl);
     
+    //Set lighting if it has changed
+    if (prevLighting != curLighting) {
+      if (curLighting)
+        gl.glEnable(GL2.GL_LIGHTING);
+      else
+        gl.glDisable(GL2.GL_LIGHTING);
+      
+      prevLighting = curLighting;
+      System.out.println("Lighting: " + ((curLighting) ? "ENABLED" : "DISABLED"));
+    }
+    
     //Setup Sunlight
     setupSun(gl);
     
+    //Do textures need reloading?
+    if (prevTexturePack != curTexturePack) {
+      setupTextures();
+      prevTexturePack = curTexturePack;
+    }
+    
     //Draw terrain
-    myTerrain.draw(gl);
+    myTerrain.draw(gl, texturePack);
   }
   
   @Override
@@ -123,8 +156,14 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     gl.glEnable(GL2.GL_BACK);
     */
     
-    //gl.glEnable(GL2.GL_LIGHTING); //enable lighting
-    //gl.glEnable(GL2.GL_LIGHT1); //skip light0 and use first standard light
+    gl.glEnable(GL2.GL_LIGHTING); //enable lighting
+    gl.glEnable(GL2.GL_LIGHT1); //skip light0 and use first standard light
+    
+    gl.glEnable(GL2.GL_TEXTURE_2D); //turn on texture features
+    setupTextures(); //read in and load textures file with IO
+    gl.glGenerateMipmap(GL2.GL_TEXTURE_2D); //make smaller copies from 512x512 texture for higher quality textures and performance
+    gl.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR); //use trilinear filtering with MIN filter
+    
   }
   
   @Override
@@ -201,7 +240,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     finalSunlightVector[1] = sunlightVector[1];
     finalSunlightVector[2] = sunlightVector[2];
     finalSunlightVector[3] = 0; //for directional light
-  
+    
     float[] diffuseComponent = new float[]{1.0f, 1.0f, 1.0f, 1.0f}; //diffuse all light
     gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, diffuseComponent, 0);
     gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, sunlightVector, 0);
@@ -209,6 +248,42 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     gl.glPopMatrix();
   }
   
+  /**
+   * Setup and read in textures to be used later.
+   * We only need to do this once.
+   */
+  private void setupTextures() {
+    System.out.println("Switching to texture pack #: " + this.curTexturePack);
+    
+    switch(this.curTexturePack) {
+      case 0:
+        //Default
+        try {
+          texturePack.setTerrain(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/fifa_grass.jpg"), true, TextureIO.JPG));
+          texturePack.setTreeTrunk(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/tree_trunk.jpg"), true, TextureIO.JPG));
+          texturePack.setTreeLeaves(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/tree_leaves.jpg"), true, TextureIO.JPG));
+          texturePack.setRoad(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/asphalt.png"), true, TextureIO.PNG));
+        } catch (IOException e) {
+          //File may not exist
+          e.printStackTrace();
+        }
+        break;
+      case 1:
+        //Molten/Dead/Halloween
+        try {
+          texturePack.setTerrain(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/lava.jpg"), true, TextureIO.JPG));
+          texturePack.setTreeTrunk(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/black_bark.png"), true, TextureIO.PNG));
+          texturePack.setTreeLeaves(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/autumn_leaves.jpg"), true, TextureIO.JPG));
+          texturePack.setRoad(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/lava_crack.jpg"), true, TextureIO.JPG));
+        } catch (IOException e) {
+          //File may not exist
+          e.printStackTrace();
+        }
+        break;
+      default:
+        break;
+    }
+  }
   
   @Override
   public void keyTyped(KeyEvent e) {
@@ -218,41 +293,54 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   public void keyPressed(KeyEvent e) {
     switch(e.getKeyCode()){
       case KeyEvent.VK_UP:
-        {
-          //Calculate new camera location
-          double newX = (Math.cos(Math.toRadians(cameraRotation)) * WALKING_SPEED) + cameraPosition[0];
-          double newZ = (Math.sin(Math.toRadians(cameraRotation)) * WALKING_SPEED) + cameraPosition[1];
-          
-          //Update global camera position only if movement doesn't take us 'off the grid'
-          if (!(newX < 0 || newX > myTerrain.size().getWidth() - 1 || newZ < 0 || newZ > myTerrain.size().getHeight() - 1)) {
-            cameraPosition[0] = newX;
-            cameraPosition[1] = newZ;
-          }
+      {
+        //Calculate new camera location
+        double newX = (Math.cos(Math.toRadians(cameraRotation)) * WALKING_SPEED) + cameraPosition[0];
+        double newZ = (Math.sin(Math.toRadians(cameraRotation)) * WALKING_SPEED) + cameraPosition[1];
+        
+        //Update global camera position only if movement doesn't take us 'off the grid'
+        if (!(newX < 0 || newX > myTerrain.size().getWidth() - 1 || newZ < 0 || newZ > myTerrain.size().getHeight() - 1)) {
+          cameraPosition[0] = newX;
+          cameraPosition[1] = newZ;
         }
-        break;
+      }
+      break;
       case KeyEvent.VK_DOWN:
-        {
-          //Calculate new camera location
-          double newX = cameraPosition[0] - (Math.cos(Math.toRadians(cameraRotation)) * WALKING_SPEED);
-          double newZ = cameraPosition[1] - (Math.sin(Math.toRadians(cameraRotation)) * WALKING_SPEED);
-    
-          //Update global camera position only if movement doesn't take us 'off the grid'
-          if (!(newX < 0 || newX > myTerrain.size().getWidth() - 1 || newZ < 0 || newZ > myTerrain.size().getHeight() - 1)) {
-            cameraPosition[0] = newX;
-            cameraPosition[1] = newZ;
-          }
+      {
+        //Calculate new camera location
+        double newX = cameraPosition[0] - (Math.cos(Math.toRadians(cameraRotation)) * WALKING_SPEED);
+        double newZ = cameraPosition[1] - (Math.sin(Math.toRadians(cameraRotation)) * WALKING_SPEED);
+        
+        //Update global camera position only if movement doesn't take us 'off the grid'
+        if (!(newX < 0 || newX > myTerrain.size().getWidth() - 1 || newZ < 0 || newZ > myTerrain.size().getHeight() - 1)) {
+          cameraPosition[0] = newX;
+          cameraPosition[1] = newZ;
         }
-        break;
+      }
+      break;
       case KeyEvent.VK_LEFT:
-        {
-          cameraRotation -= CAMERA_ROTATION_STEP;
-        }
-        break;
+      {
+        cameraRotation -= CAMERA_ROTATION_STEP;
+      }
+      break;
       case KeyEvent.VK_RIGHT:
-        {
-          cameraRotation += CAMERA_ROTATION_STEP;
-        }
-        break;
+      {
+        cameraRotation += CAMERA_ROTATION_STEP;
+      }
+      break;
+      case KeyEvent.VK_G:
+      {
+        //Cycle through texture packs
+        ++curTexturePack;
+        curTexturePack %= NUM_TEXTURE_PACKS; //handle overflow
+      }
+      break;
+      case KeyEvent.VK_L:
+      {
+        //Toggle lighting
+        this.curLighting = !this.curLighting;
+      }
+      break;
       default:
         break;
     }

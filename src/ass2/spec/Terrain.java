@@ -3,6 +3,8 @@ package ass2.spec;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureCoords;
 
 import java.awt.Dimension;
 import java.util.ArrayList;
@@ -209,8 +211,14 @@ public class Terrain {
   
   /*********************** My Code *********************/
   
-  public void draw(GL2 gl) {
+  public void draw(GL2 gl, TexturePack texturePack) {
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
+    
+    //Get terrain texture
+    Texture terrain = texturePack.getTerrain();
+    terrain.enable(gl);
+    terrain.bind(gl);
+    TextureCoords textureCoords = terrain.getImageTexCoords();
     
     //Draw the terrain one grid point at a time
     //Each grid contains 2 triangles
@@ -220,6 +228,10 @@ public class Terrain {
         double[] v1 = {x, getGridAltitude(x, z), z};
         double[] v2 = {x, getGridAltitude(x, z + 1), z + 1};
         double[] v3 = {x + 1, getGridAltitude(x + 1, z), z};
+  
+        double[] v1Texture = {textureCoords.left(), textureCoords.bottom()};
+        double[] v2Texture = {textureCoords.right(), textureCoords.bottom()};
+        double[] v3Texture = {textureCoords.left(), textureCoords.top()};
         
         double[] normal1 = MathUtil.getNormal(v1, v2, v3);
         gl.glNormal3dv(normal1, 0);
@@ -227,9 +239,12 @@ public class Terrain {
         //Draw first triangle in grid
         gl.glBegin(GL2.GL_TRIANGLES);
         {
-          gl.glColor3f(0.0f, 1.0f, 0.0f); //TODO: Remove, green grass
+          gl.glColor3f(0.0f, 1.0f, 0.0f); //Green colour (does nothing if lighting enabled)
+          gl.glTexCoord2dv(v1Texture, 0);
           gl.glVertex3dv(v1, 0);
+          gl.glTexCoord2dv(v2Texture, 0);
           gl.glVertex3dv(v2, 0);
+          gl.glTexCoord2dv(v3Texture, 0);
           gl.glVertex3dv(v3, 0);
         }
         gl.glEnd();
@@ -238,31 +253,38 @@ public class Terrain {
         double[] v5 = {x, getGridAltitude(x, z + 1), z + 1};
         double[] v6 = {x + 1, getGridAltitude(x + 1, z + 1), z + 1};
   
+        double[] v4Texture = {textureCoords.left(), textureCoords.top()};
+        double[] v5Texture = {textureCoords.right(), textureCoords.bottom()};
+        double[] v6Texture = {textureCoords.right(), textureCoords.top()};
+  
         double[] normal2 = MathUtil.getNormal(v4, v5, v6);
         gl.glNormal3dv(normal2, 0);
   
         //Draw second triangle in grid
         gl.glBegin(GL2.GL_TRIANGLES);
         {
-          gl.glColor3f(0.0f, 1.0f, 0.0f); //TODO: Remove, green grass
+          gl.glColor3f(0.0f, 1.0f, 0.0f); //Green colour (does nothing if lighting enabled)
+          gl.glTexCoord2dv(v4Texture, 0);
           gl.glVertex3dv(v4, 0);
+          gl.glTexCoord2dv(v5Texture, 0);
           gl.glVertex3dv(v5, 0);
+          gl.glTexCoord2dv(v6Texture, 0);
           gl.glVertex3dv(v6, 0);
         }
         gl.glEnd();
       }
     }
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
-  
+    terrain.disable(gl); //turn off terrain
   
     //Draw all trees part of terrain
     for (Tree tree : myTrees) {
-      tree.draw(gl);
+      tree.draw(gl, texturePack);
     }
     
     //Draw all roads part of terrain
     for (Road road : myRoads) {
-      road.draw(gl);
+      road.draw(gl, texturePack);
     }
   }
   
