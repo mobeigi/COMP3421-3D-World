@@ -212,6 +212,9 @@ public class Terrain {
   /*********************** My Code *********************/
   
   public void draw(GL2 gl, TexturePack texturePack) {
+    gl.glPushMatrix();
+    gl.glPushAttrib(GL2.GL_LIGHTING);
+    
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
     
     //Get terrain texture
@@ -219,6 +222,15 @@ public class Terrain {
     terrain.enable(gl);
     terrain.bind(gl);
     TextureCoords textureCoords = terrain.getImageTexCoords();
+  
+    //Set terrain material
+    float[] ambient = {0.2f, 0.25f, 0.2f, 1.0f};
+    float[] diffuse = {0.2f, 0.6f, 0.3f, 1.0f};
+    float[] specular = {0.0f, 0.0f, 0.0f, 1.0f};
+  
+    gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_AMBIENT, ambient, 0);
+    gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_DIFFUSE, diffuse, 0);
+    gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SPECULAR, specular, 0);
     
     //Draw the terrain one grid point at a time
     //Each grid contains 2 triangles
@@ -286,6 +298,9 @@ public class Terrain {
     for (Road road : myRoads) {
       road.draw(gl, texturePack);
     }
+    
+    gl.glPopAttrib();
+    gl.glPopMatrix();
   }
   
 }

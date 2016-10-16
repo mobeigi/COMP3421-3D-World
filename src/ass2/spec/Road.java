@@ -21,7 +21,7 @@ public class Road {
   //Constants
   private static final double DIVISION_FACTOR = 100; //the higher this is the more accurate/smooth road is
                                                       //but also increases computation cost
-  private static final double ALTITUDE_OFFSET = 0.01; //to combat 'Z-fighting' of terrain and road
+  private static final double ALTITUDE_OFFSET = 0.015; //to combat 'Z-fighting' of terrain and road
   
   /**
    * Create a new road starting at the specified point
@@ -160,6 +160,7 @@ public class Road {
   /*********************** My Code *********************/
   public void draw(GL2 gl, TexturePack texturePack) {
     gl.glPushMatrix();
+    gl.glPushAttrib(GL2.GL_LIGHTING);
     
     double step = (myPoints.size() / 6.0) / DIVISION_FACTOR; //determine how many quadrants to cut road into
                                                              //the smaller the step the more intermediate 't' values
@@ -174,6 +175,16 @@ public class Road {
     road.enable(gl);
     road.bind(gl);
     TextureCoords textureCoords = road.getImageTexCoords();
+    
+    //Set road material (matte kind of look)
+    float[] ambient = {0.2f, 0.2f, 0.2f, 1.0f};
+    float[] diffuse = {0.4f, 0.4f, 0.4f, 1.0f};
+    float[] specular = {0.5f, 0.5f, 0.5f, 1.0f};
+  
+    gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_AMBIENT, ambient, 0);
+    gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_DIFFUSE, diffuse, 0);
+    gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SPECULAR, specular, 0);
+    
     
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
     
@@ -259,6 +270,7 @@ public class Road {
     road.disable(gl);
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
     
+    gl.glPopAttrib();
     gl.glPopMatrix();
   }
   

@@ -300,7 +300,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
           texturePack.setTreeTrunk(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/black_bark.png"), true, TextureIO.PNG));
           texturePack.setTreeLeaves(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/autumn_leaves.jpg"), true, TextureIO.JPG));
           texturePack.setRoad(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/lava_crack.jpg"), true, TextureIO.JPG));
-          texturePack.setAvatar(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/redhair.jpg"), true, TextureIO.JPG));
+          texturePack.setAvatar(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/circular_gold.jpg"), true, TextureIO.JPG));
         } catch (IOException e) {
           //File may not exist
           e.printStackTrace();
@@ -325,7 +325,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     gl.glRotated(-cameraRotation, 0, 1, 0); //make teapot face outwards (like a face)
     
     //Set material for teapot (metalic look)
-    //Golden values borrowed from week 5 LightExample.java
+    //Golden (aka metalic) values borrowed from week 5 LightExample.java
     float[] ambient = {0.24725f, 0.1995f, 0.0745f}; //gold ambient
     float[] diffuse = {0.75164f,0.60648f,0.22648f}; //gold defuse
     float[] specular = {0.628281f,0.555802f,0.366065f}; //gold specular

@@ -32,11 +32,21 @@ public class Tree {
   /*********************** My Code *********************/
   public void draw(GL2 gl, TexturePack texturePack) {
     gl.glPushMatrix();
+    gl.glPushAttrib(GL2.GL_LIGHTING);
   
     GLU glu = new GLU(); //use GLU to construct tree, benefit is normals set for us, also supports texturing
     
     gl.glPushMatrix();
     {
+      //Set trunk material
+      float[] ambient = {0.2f, 0.2f, 0.2f, 1.0f};
+      float[] diffuse = {0.3f, 0.1f, 0.0f, 1.0f};
+      float[] specular = {0.5f, 0.5f, 0.5f, 1.0f};
+  
+      gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_AMBIENT, ambient, 0);
+      gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_DIFFUSE, diffuse, 0);
+      gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SPECULAR, specular, 0);
+  
       //Get texture
       Texture treeTrunk = texturePack.getTreeTrunk();
       treeTrunk.enable(gl);
@@ -57,6 +67,15 @@ public class Tree {
   
     gl.glPushMatrix();
     {
+      //Set leaves material
+      float[] ambient = {0.3f, 0.4f, 0.3f, 1.0f};
+      float[] diffuse = {0.0f, 0.5f, 0.0f, 0.5f};
+      float[] specular = {0.5f, 0.5f, 0.5f, 0.7f};
+  
+      gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_AMBIENT, ambient, 0);
+      gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_DIFFUSE, diffuse, 0);
+      gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SPECULAR, specular, 0);
+      
       //Get texture
       Texture treeLeaves = texturePack.getTreeLeaves();
       treeLeaves.enable(gl);
@@ -74,6 +93,7 @@ public class Tree {
     }
     gl.glPopMatrix();
     
+    gl.glPopAttrib();
     gl.glPopMatrix();
   }
   
