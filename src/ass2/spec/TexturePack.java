@@ -7,6 +7,7 @@ public class TexturePack {
   private Texture treeTrunk;
   private Texture treeLeaves;
   private Texture road;
+  private Texture avatar;
   
   public Texture getTerrain() {
     return terrain;
@@ -38,5 +39,13 @@ public class TexturePack {
   
   public void setRoad(Texture road) {
     this.road = road;
+  }
+  
+  public Texture getAvatar() {
+    return avatar;
+  }
+  
+  public void setAvatar(Texture avatar) {
+    this.avatar = avatar;
   }
 }
