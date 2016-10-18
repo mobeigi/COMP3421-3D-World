@@ -5,6 +5,7 @@ import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLJPanel;
@@ -43,6 +44,12 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   private boolean prevLighting;
   private boolean curLighting;
   
+  //Shader
+  private int shaderProgram;
+  
+  //Enemy
+  Enemy enemy;
+  
   //Constants
   private static final double FIELD_OF_VIEW = 60.0; //field of view to use in world
   private static final double MAXIMUM_FIELD_OF_VIEW = 180.0; //max possible value for field of view
@@ -52,6 +59,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   private static final double CAMERA_DEFAULT_ROTATION = 45.0; //camera default rotation
   private static final double CAMERA_ROTATION_STEP = 10; //number of degrees to rotate camera by
   private static final double NUM_TEXTURE_PACKS = 2; //total number of texture packs
+  private static final String VERTEX_SHADER_GLSL = "/shader/AttributeVertex.glsl"; //path to vertex shader GLSL file
+  private static final String FRAGMENT_SHADER_GLSL = "/shader/AttributeFragment.glsl"; //path to fragment shader GLSL file
   
   
   public Game(Terrain terrain) {
@@ -81,8 +90,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     panel.addGLEventListener(this);
     panel.addKeyListener(this);
     
-    // Add an animator to call 'display' at 60fps
-    FPSAnimator animator = new FPSAnimator(60);
+    // Add an animator to call 'display' at some interval
+    FPSAnimator animator = new FPSAnimator(60); //todo: up this for smoother movements
     animator.add(panel);
     animator.start();
     
@@ -135,8 +144,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
       prevTexturePack = curTexturePack;
     }
     
-    //Draw terrain
-    myTerrain.draw(gl, texturePack);
+    //Draw terrain including enemy
+    myTerrain.draw(gl, texturePack, shaderProgram);
     
     //Draw avatar
     if (thirdPerson) {
@@ -175,7 +184,19 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     setupTextures(); //read in and load textures file with IO
     gl.glGenerateMipmap(GL2.GL_TEXTURE_2D); //make smaller copies from 512x512 texture for higher quality textures and performance
     gl.glTexParameteri( GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR); //use trilinear filtering with MIN filter
+
+    //Configure shader
+    gl.glShadeModel(GL2.GL_SMOOTH); //we will use Gouraud shading
     
+    try {
+      //Get resource URLS
+      URL vertexShader = this.getClass().getResource(VERTEX_SHADER_GLSL);
+      URL fragmentShader = this.getClass().getResource(FRAGMENT_SHADER_GLSL);
+      shaderProgram = Shader.initShaders(gl, vertexShader.getPath(), fragmentShader.getPath());
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.exit(1);
+    }
   }
   
   @Override
@@ -268,7 +289,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     
     float[] diffuseComponent = new float[]{1.0f, 1.0f, 1.0f, 1.0f}; //diffuse all light
     gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, diffuseComponent, 0);
-    gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, sunlightVector, 0);
+    gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, finalSunlightVector, 0);
     
     gl.glPopMatrix();
   }

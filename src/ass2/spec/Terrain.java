@@ -22,6 +22,7 @@ public class Terrain {
   private Dimension mySize;
   private double[][] myAltitude;
   private List<Tree> myTrees;
+  private List<Enemy> myEnemies;
   private List<Road> myRoads;
   private float[] mySunlight;
   
@@ -35,6 +36,7 @@ public class Terrain {
     mySize = new Dimension(width, depth);
     myAltitude = new double[width][depth];
     myTrees = new ArrayList<Tree>();
+    myEnemies = new ArrayList<Enemy>();
     myRoads = new ArrayList<Road>();
     mySunlight = new float[3];
   }
@@ -49,6 +51,10 @@ public class Terrain {
   
   public List<Tree> trees() {
     return myTrees;
+  }
+  
+  public List<Enemy> enemies() {
+    return myEnemies;
   }
   
   public List<Road> roads() {
@@ -211,7 +217,7 @@ public class Terrain {
   
   /*********************** My Code *********************/
   
-  public void draw(GL2 gl, TexturePack texturePack) {
+  public void draw(GL2 gl, TexturePack texturePack, int shaderProgram) {
     gl.glPushMatrix();
     gl.glPushAttrib(GL2.GL_LIGHTING);
     
@@ -299,8 +305,25 @@ public class Terrain {
       road.draw(gl, texturePack);
     }
     
+    //Draw all enemies on terrain
+    for (Enemy enemy : myEnemies) {
+      enemy.draw(gl, texturePack, shaderProgram);
+    }
+    
     gl.glPopAttrib();
     gl.glPopMatrix();
+  }
+  
+  /**
+   * Add a enemy at the specified (x,z) point with some rotation.
+   *
+   * @param x x axis coordinate of enemy
+   * @param z z axis coordinate of enemy
+   * @param rotation rotation (along y axis) that enemy should be facing
+   */
+  public void addEnemy(double x, double z, double rotation) {
+    Enemy enemy = new Enemy(this, x, z, rotation);
+    myEnemies.add(enemy);
   }
   
 }
