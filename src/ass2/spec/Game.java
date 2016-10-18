@@ -36,7 +36,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   
   //Textures
   private TexturePack texturePack;
-  private int prevTexturePack; //Used to detemine if texture packs have changed (is reload of textures required)
+  private int prevTexturePack; //Used to determine if texture packs have changed (is reload of textures required)
   private int curTexturePack;
   
   //Lighting
@@ -47,7 +47,6 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   private static final double FIELD_OF_VIEW = 60.0; //field of view to use in world
   private static final double MAXIMUM_FIELD_OF_VIEW = 180.0; //max possible value for field of view
   private static final double ALTITUDE_OFFSET = 0.5; //camera offset from ground so world is visible
-  private static final double AVATAR_ALTITUDE_OFFSET = 0.08; //avatar offset from ground so sits on terrain
   private static final double THIRDPERSON_ALTITUDE_CHANGE = 1.0; //how much to change altitude of camera in third person view
   private static final double WALKING_SPEED = 0.1; //speed at which player (camera) moves at
   private static final double CAMERA_DEFAULT_ROTATION = 45.0; //camera default rotation
@@ -140,8 +139,10 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     myTerrain.draw(gl, texturePack);
     
     //Draw avatar
-    if (thirdPerson)
-      drawAvatar(gl);
+    if (thirdPerson) {
+      Avatar avatar = new Avatar(myTerrain, cameraPosition, cameraRotation);
+      avatar.draw(gl, texturePack);
+    }
   }
   
   
@@ -309,51 +310,6 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
       default:
         break;
     }
-  }
-  
-  /**
-   * Draw player avatar (glut teapot)
-   *
-   * @param gl GL2 object
-   */
-  private void drawAvatar(GL2 gl) {
-    gl.glPushMatrix();
-    gl.glPushAttrib(GL2.GL_LIGHTING); //to preserve ambient, etc values
-    
-    //Set position
-    gl.glTranslated(cameraPosition[0], myTerrain.altitude(cameraPosition[0], cameraPosition[1]) + AVATAR_ALTITUDE_OFFSET, cameraPosition[1]);
-    gl.glRotated(-cameraRotation, 0, 1, 0); //make teapot face outwards (like a face)
-    
-    //Set material for teapot (metalic look)
-    //Golden (aka metalic) values borrowed from week 5 LightExample.java
-    float[] ambient = {0.24725f, 0.1995f, 0.0745f}; //gold ambient
-    float[] diffuse = {0.75164f,0.60648f,0.22648f}; //gold defuse
-    float[] specular = {0.628281f,0.555802f,0.366065f}; //gold specular
-    
-    gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_AMBIENT, ambient, 0);
-    gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_DIFFUSE, diffuse, 0);
-    gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SPECULAR, specular, 0);
-    
-    //Textures
-    gl.glEnable(GL2.GL_TEXTURE_GEN_S);
-    gl.glEnable(GL2.GL_TEXTURE_GEN_T);
-    Texture avatar = this.texturePack.getAvatar();
-    avatar.enable(gl);
-    avatar.bind(gl);
-    
-    GLUT glut = new GLUT();
-  
-    // The builtin teapot is back-to-front
-    // https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man3/glutSolidTeapot.3.html
-    gl.glFrontFace(GL2.GL_CW);
-    glut.glutSolidTeapot(0.08f);
-    gl.glFrontFace(GL2.GL_CCW);
-  
-    gl.glDisable(GL2.GL_TEXTURE_GEN_S);
-    gl.glDisable(GL2.GL_TEXTURE_GEN_T);
-  
-    gl.glPopAttrib();
-    gl.glPopMatrix();
   }
   
   @Override
