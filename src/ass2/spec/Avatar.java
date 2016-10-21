@@ -11,6 +11,7 @@ public class Avatar {
   
   //Constants
   private static final double AVATAR_ALTITUDE_OFFSET = 0.08; //avatar offset from ground so sits on terrain
+  private static final double PLAYER_NAME_ALTITUDE_OFFSET = AVATAR_ALTITUDE_OFFSET + 0.25; //player name offset from ground so sits above player
   
   //Constructor
   public Avatar(Terrain terrain, double[] cameraPosition, double cameraRotation) {
@@ -20,11 +21,12 @@ public class Avatar {
   }
   
   /*********************** My Code *********************/
-  public void draw(GL2 gl, TexturePack texturePack) {
+  public void draw(GL2 gl, TexturePack texturePack, boolean thirdPerson, String playerName) {
     gl.glPushMatrix();
     gl.glPushAttrib(GL2.GL_LIGHTING); //to preserve ambient, etc values
   
     //Set position
+    gl.glPushMatrix();
     gl.glTranslated(cameraPosition[0], myTerrain.altitude(cameraPosition[0], cameraPosition[1]) + AVATAR_ALTITUDE_OFFSET, cameraPosition[1]);
     gl.glRotated(-cameraRotation, 0, 1, 0); //make teapot face outwards (like a face)
   
@@ -56,6 +58,21 @@ public class Avatar {
     gl.glDisable(GL2.GL_TEXTURE_GEN_S);
     gl.glDisable(GL2.GL_TEXTURE_GEN_T);
   
+    gl.glPopMatrix();
+  
+    //Set Player name for third person mode
+    if (thirdPerson) {
+      //Disable lighting so name visible at all times (even with no light)
+      gl.glDisable(GL2.GL_LIGHTING);
+      gl.glColor3f(1.0f, 1.0f, 1.0f);
+      gl.glRasterPos3d(cameraPosition[0], myTerrain.altitude(cameraPosition[0], cameraPosition[1]) + PLAYER_NAME_ALTITUDE_OFFSET, cameraPosition[1]);
+  
+      for (int i = 0; i < playerName.length(); i++) {
+        glut.glutBitmapCharacter(GLUT.BITMAP_HELVETICA_18, playerName.charAt(i));
+      }
+      gl.glEnable(GL2.GL_LIGHTING);
+    }
+    
     gl.glPopAttrib();
     gl.glPopMatrix();
   }

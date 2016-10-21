@@ -1,5 +1,7 @@
 package ass2.spec;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
@@ -9,12 +11,11 @@ import java.net.URL;
 
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLJPanel;
-import javax.swing.JFrame;
+
+import javax.swing.*;
 
 import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.util.FPSAnimator;
-import com.jogamp.opengl.util.gl2.GLUT;
-import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureIO;
 
 
@@ -55,7 +56,11 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   private boolean nightMode;
   
   //Enemy
-  Enemy enemy;
+  private boolean gameOver;
+  private boolean gameOverMessageQueued;
+  
+  //Avatatar
+  private String playerName;
   
   //Constants
   private static final double FIELD_OF_VIEW = 60.0; //field of view to use in world
@@ -63,14 +68,15 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   public static final double ALTITUDE_OFFSET = 0.5; //camera offset from ground so world is visible
   private static final double THIRDPERSON_ALTITUDE_CHANGE = 1.0; //how much to change altitude of camera in third person view
   private static final double WALKING_SPEED = 0.1; //speed at which player (camera) moves at
+  private static final double ENEMY_MOVEMENT_SPEED = 0.02; //how fast the enemy can move
   private static final double CAMERA_DEFAULT_ROTATION = 45.0; //camera default rotation
   private static final double CAMERA_ROTATION_STEP = 10; //number of degrees to rotate camera by
   private static final double NUM_TEXTURE_PACKS = 2; //total number of texture packs
   private static final String VERTEX_SHADER_GLSL = "/shader/AttributeVertex.glsl"; //path to vertex shader GLSL file
   private static final String FRAGMENT_SHADER_GLSL = "/shader/AttributeFragment.glsl"; //path to fragment shader GLSL file
-  
   private static final double PORTAL_MIN_PROXIMITY = 0.15; //how close must you get to a portal to be teleported
   private static final double PORTAL_TELEPORT_PUSHBACK = 0.3; //how far you should be 'pushed' after teleporting from one portal to another
+  private static final double ENEMY_AWARE_PROXIMITY = 1.5; //how close must you get to an enemy before they notice you/look at you
   
   public Game(Terrain terrain) {
     super("Assignment 2");
@@ -88,6 +94,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     thirdPerson = false;
     fragmentShaderColourMode = FRAGMENT_SHADER_MODE.COLOUR;
     nightMode = false;
+    gameOver = false;
+    gameOverMessageQueued = false;
+    playerName = "Player 1";
   }
   
   /**
@@ -100,6 +109,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     GLJPanel panel = new GLJPanel();
     panel.addGLEventListener(this);
     panel.addKeyListener(this);
+    
+    //Ask for players name
+    playerName =  JOptionPane.showInputDialog(null, "What is your desired player name?", "Player Name Selection", JOptionPane.PLAIN_MESSAGE);
     
     // Add an animator to call 'display' at some interval
     FPSAnimator animator = new FPSAnimator(60); //todo: up this for smoother movements
@@ -131,6 +143,24 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     gl.glMatrixMode(GL2.GL_MODELVIEW);
     gl.glLoadIdentity();
     gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
+  
+    //If game is over, draw text on screen
+    if (gameOver && !gameOverMessageQueued) {
+      System.out.println("Game over! The player has been killed by an enemy.");
+      
+      Timer timer = new Timer(1500, new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent arg0) {
+          // Code to be executed
+          JOptionPane.showMessageDialog(null, "Game over! Restart the app to play again.", "Assignment 2", JOptionPane.INFORMATION_MESSAGE);
+          System.exit(0);
+        }
+      });
+      timer.setRepeats(false);
+      timer.start();
+  
+      gameOverMessageQueued = true;
+    }
     
     //Setup camera
     setupCamera(gl);
@@ -163,21 +193,25 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     myTerrain.draw(gl, texturePack, shaderProgram, fragmentShaderColourMode, curLighting, nightMode, torchPosition);
     
     //Draw avatar
-    if (thirdPerson) {
+    if (thirdPerson && !gameOver) {
       Avatar avatar = new Avatar(myTerrain, cameraPosition, cameraRotation);
-      avatar.draw(gl, texturePack);
+      avatar.draw(gl, texturePack, thirdPerson, playerName);
     }
     
     //Check if user is 'going through portal'
     //If they are, teleport them to other portal
-    checkPortalPairs();
+    if (!gameOver)
+      checkPortalPairs();
+    
+    //Check enemy to see if it reacts to changes
+    if (!gameOver)
+      checkEnemyBehaviour();
   }
   
   
   @Override
   public void dispose(GLAutoDrawable drawable) {
-    // TODO Auto-generated method stub
-    // TODO: Probably do not need
+    //Not used
   }
   
   @Override
@@ -376,11 +410,11 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
       double secondRotation = second.getMyRotation();
       
       //Teleport to opposite portal in pair
-      if (insidePortal(firstPos)) {
+      if (collisionCheck(firstPos, PORTAL_MIN_PROXIMITY)) {
         //Transport to other portal
         cameraPosition[0] = secondPos[0] + (Math.cos(Math.toRadians(-secondRotation)) * PORTAL_TELEPORT_PUSHBACK);
         cameraPosition[1] = secondPos[1] + (Math.sin(Math.toRadians(-secondRotation)) * PORTAL_TELEPORT_PUSHBACK);
-      } else if (insidePortal(secondPos)) {
+      } else if (collisionCheck(secondPos, PORTAL_MIN_PROXIMITY)) {
         //Transport to other portal
         cameraPosition[0] = firstPos[0] + (Math.cos(Math.toRadians(-firstRotation)) * PORTAL_TELEPORT_PUSHBACK);
         cameraPosition[1] = firstPos[1] + (Math.sin(Math.toRadians(-firstRotation)) * PORTAL_TELEPORT_PUSHBACK);
@@ -390,16 +424,52 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   
   /**
    * Helper function. Acts as very native collection detection along (x,z) axes.
-   * @param portalPos position of a portal
-   * @return true if colliding with the player (avatar/camera), false otherwise
+   * @param position position of test object
+   * @param epsilon value determining how precise collision check is
+   * @return true if colliding, false otherwise
    */
-  private boolean insidePortal(double[] portalPos) {
+  private boolean collisionCheck(double[] position, double epsilon) {
     
-    if (Math.abs(cameraPosition[0] - portalPos[0]) <= PORTAL_MIN_PROXIMITY &&
-        Math.abs(cameraPosition[1] - portalPos[1]) <= PORTAL_MIN_PROXIMITY)
+    if (Math.abs(cameraPosition[0] - position[0]) <= epsilon &&
+        Math.abs(cameraPosition[1] - position[1]) <= epsilon)
       return true;
     
     return false;
+  }
+  
+  
+  private void checkEnemyBehaviour() {
+    for (Enemy e : myTerrain.enemies()) {
+      double[] enemyPosition = e.getMyPos();
+      //Check to see if enemy is close enough to be looked at
+      if (collisionCheck(enemyPosition, ENEMY_AWARE_PROXIMITY)) {
+        //Make enemy look at player
+        double directionToEnemy = Math.toDegrees(Math.atan2(cameraPosition[0] - enemyPosition[0], cameraPosition[1] - enemyPosition[1]));
+        e.setMyRotation(-directionToEnemy);
+        
+        //Make enemy slowly path towards player
+        double straightLineDistance = Math.sqrt(Math.pow(enemyPosition[0] - cameraPosition[0], 2) + Math.pow(enemyPosition[1] - cameraPosition[1], 2));
+        if (straightLineDistance > 0.1) {
+          double newEnemyX = Math.cos(Math.toRadians(-(directionToEnemy - 90.0))) * ENEMY_MOVEMENT_SPEED + enemyPosition[0];
+          double newEnemyZ = Math.sin(Math.toRadians(-(directionToEnemy - 90.0))) * ENEMY_MOVEMENT_SPEED + enemyPosition[1];
+          
+          //Only move if we stay on the grid
+          if (newEnemyX > 0 && newEnemyX <= myTerrain.size().getWidth() - 1 && newEnemyZ > 0 && newEnemyZ <= myTerrain.size().getHeight() - 1)
+            e.setMyPos(new double[]{newEnemyX, newEnemyZ});
+        }
+        
+        //If enemy has caught player, they die! Game over.
+        if (straightLineDistance <= 0.2) {
+          //Check Y axis manually
+          double enemyYPosition = e.getMyYPosition();
+  
+          if (Math.abs(Enemy.MIN_ENEMY_ALTITUDE - enemyYPosition) <= 0.05) {
+            //End the game, Z axis is on the player
+            gameOver = true;
+          }
+        }
+      }
+    }
   }
   
   /**
@@ -458,8 +528,26 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   public void keyTyped(KeyEvent e) {
   }
   
+  /**
+   * Commands:
+   * UP: Move avatar/camera forwards
+   * DOWN: Move avatar/camera backwards
+   * LEFT: Move avatar/camera to the left
+   * RIGHT: Move avatar/camera to the right
+   * G: Toggle texture packs
+   * L: Toggle lighting (ON/OFF)
+   * T: Toggle third person mode
+   * F: Toggle shader mode (colours/textures)
+   * N: Toggle night mode (and torch)
+   *
+   * @param e Key event
+   */
+  
   @Override
   public void keyPressed(KeyEvent e) {
+    if (gameOver) //user loses control now!
+      return;
+    
     switch(e.getKeyCode()){
       case KeyEvent.VK_UP:
       {
@@ -489,12 +577,13 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
       break;
       case KeyEvent.VK_LEFT:
       {
-        cameraRotation -= CAMERA_ROTATION_STEP;
+        cameraRotation = (cameraRotation - CAMERA_ROTATION_STEP) % 360;
+        if (cameraRotation < 0) cameraRotation = 360.0;
       }
       break;
       case KeyEvent.VK_RIGHT:
       {
-        cameraRotation += CAMERA_ROTATION_STEP;
+        cameraRotation = (cameraRotation + CAMERA_ROTATION_STEP) % 360;
       }
       break;
       case KeyEvent.VK_G:

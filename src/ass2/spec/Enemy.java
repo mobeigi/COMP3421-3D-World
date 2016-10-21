@@ -37,20 +37,27 @@ public class Enemy {
   
   //Enemy location
   private double[] myPos;
+  private double myYPosition;
   private double myRotation;
   
+  //For bouncing animation
+  private double bounceTime;
+  public static double MIN_ENEMY_ALTITUDE = 0.18;
   
+  //Setup
   private boolean setupComplete;
   
   public Enemy(Terrain terrain, double x, double z, double rotation) {
     this.myTerrain = terrain;
     this.myPos = new double[]{x, z};
     this.myRotation = rotation;
+  
+    this.bounceTime = 0;
     
     this.setupComplete = false;
   }
   
-  //Getters
+  //Getters and setters
   public double[] getMyPos() {
     return myPos;
   }
@@ -59,6 +66,18 @@ public class Enemy {
     return myRotation;
   }
   
+  
+  public void setMyRotation(double myRotation) {
+    this.myRotation = myRotation;
+  }
+  
+  public void setMyPos(double[] myPos) {
+    this.myPos = myPos;
+  }
+  
+  public double getMyYPosition() {
+    return myYPosition;
+  }
   
   public void draw(GL2 gl, TexturePack texturePack, int shaderProgram, Game.FRAGMENT_SHADER_MODE fragmentShaderColourMode,
                    boolean curLighting, boolean nightMode, float[] torchPosition) {
@@ -70,6 +89,11 @@ public class Enemy {
       createSphereArraysAndVBOs(gl);
       setupComplete = true;
     }
+    
+    //Computer Y position of enemy based on positive sine wave
+    bounceTime = (bounceTime + 0.05) % (180);
+    myYPosition = Math.abs(Math.sin(bounceTime));
+    myYPosition = Math.max(myYPosition, MIN_ENEMY_ALTITUDE);
     
     //Use shader to process vertices/fragments
     gl.glUseProgram(shaderProgram);
@@ -115,15 +139,16 @@ public class Enemy {
     //Set various lighting modes
     float[] ambient = {0.2f, 0.2f, 0.2f, 1.0f};
     float[] diffuse = {1.0f, 1.0f, 1.0f, 1.0f};
-    float[] specular = {0.0f, 0.0f, 0.0f, 1.0f};
+    float[] specular = {0.2f, 0.2f, 0.2f, 1.0f};
   
     gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_AMBIENT, ambient, 0);
     gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_DIFFUSE, diffuse, 0);
     gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SPECULAR, specular, 0);
     
     //Draw the enemy model
-    gl.glTranslated(myPos[0], myTerrain.altitude(myPos[0], myPos[1]) + Game.ALTITUDE_OFFSET, myPos[1]);
-    gl.glRotated(myRotation, 0, 1.0, 0);
+    //We offset the y axis by yPosition for the bouncing enemy animation
+    gl.glTranslated(myPos[0], myTerrain.altitude(myPos[0], myPos[1]) + myYPosition, myPos[1]);
+    gl.glRotated(-myRotation, 0, 1.0, 0);
     
     //Body
     gl.glPushMatrix();
@@ -304,5 +329,4 @@ public class Enemy {
       gl.glDrawArrays(GL2.GL_QUAD_STRIP, pos, vertices);
     }
   }
-  
 }
