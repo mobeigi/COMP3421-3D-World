@@ -60,7 +60,8 @@ public class Enemy {
   }
   
   
-  public void draw(GL2 gl, TexturePack texturePack, int shaderProgram, Game.FRAGMENT_SHADER_MODE fragmentShaderColourMode, boolean curLighting) {
+  public void draw(GL2 gl, TexturePack texturePack, int shaderProgram, Game.FRAGMENT_SHADER_MODE fragmentShaderColourMode,
+                   boolean curLighting, boolean nightMode, float[] torchPosition) {
     gl.glPushMatrix();
     
     //Setup if it hasn't already happened
@@ -104,7 +105,12 @@ public class Enemy {
     
     //Set sun position
     int sunID = gl.glGetUniformLocation(shaderProgram, "sunPosition");
-    gl.glUniform3fv(sunID, 1, myTerrain.getSunlight(), 0);
+    
+    //If night mode, the sun is the position of the camera (spotlight)
+    if (nightMode)
+      gl.glUniform3fv(sunID, 1, torchPosition, 0);
+    else
+      gl.glUniform3fv(sunID, 1, myTerrain.getSunlight(), 0);
     
     //Set various lighting modes
     float[] ambient = {0.2f, 0.2f, 0.2f, 1.0f};

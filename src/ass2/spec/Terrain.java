@@ -217,7 +217,8 @@ public class Terrain {
   
   /*********************** My Code *********************/
   
-  public void draw(GL2 gl, TexturePack texturePack, int shaderProgram, Game.FRAGMENT_SHADER_MODE fragmentShaderColourMode, boolean curLighting) {
+  public void draw(GL2 gl, TexturePack texturePack, int shaderProgram, Game.FRAGMENT_SHADER_MODE fragmentShaderColourMode,
+                   boolean curLighting, boolean nightMode, float[] torchPosition) {
     gl.glPushMatrix();
     gl.glPushAttrib(GL2.GL_LIGHTING);
     
@@ -307,7 +308,7 @@ public class Terrain {
     
     //Draw all enemies on terrain
     for (Enemy enemy : myEnemies) {
-      enemy.draw(gl, texturePack, shaderProgram, fragmentShaderColourMode, curLighting);
+      enemy.draw(gl, texturePack, shaderProgram, fragmentShaderColourMode, curLighting, nightMode, torchPosition);
     }
     
     gl.glPopAttrib();

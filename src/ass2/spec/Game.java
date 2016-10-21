@@ -51,6 +51,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     COLOUR, TEXTURE
   }
   
+  //Night mode
+  private boolean nightMode;
+  
   //Enemy
   Enemy enemy;
   
@@ -74,14 +77,15 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     myTerrain = terrain;
     cameraPosition = new double[]{0,0};
     cameraRotation = CAMERA_DEFAULT_ROTATION;
-    width = 800;
-    height = 600;
+    width = 800*2;
+    height = 600*2;
     glu = new GLU();
     texturePack = new TexturePack();
     curTexturePack = prevTexturePack = 0;
     curLighting = prevLighting = true;
     thirdPerson = false;
     fragmentShaderColourMode = FRAGMENT_SHADER_MODE.COLOUR;
+    nightMode = false;
   }
   
   /**
@@ -137,11 +141,14 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         gl.glDisable(GL2.GL_LIGHTING);
       
       prevLighting = curLighting;
-      System.out.println("Lighting: " + ((curLighting) ? "ENABLED" : "DISABLED"));
     }
     
     //Setup Sunlight
     setupSun(gl);
+    
+    //Setup torch if in night mode
+    if (nightMode)
+      setupTorch(gl);
     
     //Do textures need reloading?
     if (prevTexturePack != curTexturePack) {
@@ -150,7 +157,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     }
     
     //Draw terrain including enemy
-    myTerrain.draw(gl, texturePack, shaderProgram, fragmentShaderColourMode, curLighting);
+    float[] torchPosition = {(float)cameraPosition[0], (float)(myTerrain.altitude(cameraPosition[0], cameraPosition[1])) + (float)ALTITUDE_OFFSET, (float)cameraPosition[1]};
+    myTerrain.draw(gl, texturePack, shaderProgram, fragmentShaderColourMode, curLighting, nightMode, torchPosition);
     
     //Draw avatar
     if (thirdPerson) {
@@ -170,20 +178,16 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   public void init(GLAutoDrawable drawable) {
     GL2 gl = drawable.getGL().getGL2();
     
-    //Background colour
-    gl.glClearColor(0.529411f, 0.807843f, 0.980392f, 1.0f); //Sky Blue, RGB: 135-206-250
-    
     //Configure required options
     gl.glEnable(GL2.GL_DEPTH_TEST); //need Z axis taken into account
     gl.glEnable(GL2.GL_NORMALIZE); //automatically normalise our normals as we scale
     
     /*
-    gl.glEnable(GL2.GL_CULL_FACE);  //optimization to get rid of various fragments
+    gl.glEnable(GL2.GL_CULL_FACE);  //optimization to get rid of various fragments todo: enable
     gl.glEnable(GL2.GL_BACK);
     */
     
     gl.glEnable(GL2.GL_LIGHTING); //enable lighting
-    gl.glEnable(GL2.GL_LIGHT1); //skip light0 and use first standard light
     
     gl.glEnable(GL2.GL_TEXTURE_2D); //turn on texture features
     setupTextures(); //read in and load textures file with IO
@@ -278,9 +282,14 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
    */
   private void setupSun(GL2 gl) {
     gl.glPushMatrix();
+  
+    gl.glEnable(GL2.GL_LIGHT1);
+  
+    //Background colour
+    gl.glClearColor(0.529411f, 0.807843f, 0.980392f, 1.0f); //Sky Blue, RGB: 135-206-250
     
     //Global Ambient light
-    float[] globalAmb= {1.0f, 1.0f, 1.0f, 1.0f}; //full intensity
+    float[] globalAmb = {1.0f, 1.0f, 1.0f, 1.0f}; //full intensity
     gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, globalAmb, 0);
     
     //Sunlight (LIGHT1)
@@ -293,8 +302,54 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     finalSunlightVector[3] = 0; //for directional light
     
     float[] diffuseComponent = new float[]{1.0f, 1.0f, 1.0f, 1.0f}; //diffuse all light
+    
     gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_DIFFUSE, diffuseComponent, 0);
     gl.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, finalSunlightVector, 0);
+    
+    gl.glPopMatrix();
+  }
+  
+  /**
+   * Setup a torch as a light source.
+   *
+   * @param gl GL2 object
+   */
+  private void setupTorch(GL2 gl) {
+    gl.glPushMatrix();
+    
+    //Disable sun in night mode
+    gl.glDisable(GL2.GL_LIGHT1);
+    
+    //Enable torch light
+    gl.glEnable(GL2.GL_LIGHT2);
+  
+    //Background colour
+    gl.glClearColor(0.0f, 0.09411f, 0.2823f, 1.0f); //Night sky, storm petrel
+    
+    //Global Ambient light
+    float[] globalAmb = {0.05f, 0.05f, 0.05f, 1.0f}; //very low for night mode
+    gl.glLightModelfv(GL2.GL_LIGHT_MODEL_AMBIENT, globalAmb, 0);
+    
+    // Light property vectors.
+    float lightAmb[] = {0.05f, 0.05f, 0.05f, 1.0f};
+    float lightDifAndSpec[] = {1.0f, 1.0f, 1.0f, 1.0f};
+  
+    // Light properties.
+    gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_AMBIENT, lightAmb, 0);
+    gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_DIFFUSE, lightDifAndSpec, 0);
+    gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_SPECULAR, lightDifAndSpec, 0);
+    
+    //Set torch position to camera position
+    float[] torchPosition = {(float)cameraPosition[0], (float)(myTerrain.altitude(cameraPosition[0], cameraPosition[1])) + (float)ALTITUDE_OFFSET, (float)cameraPosition[1], 1.0f};
+    gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_POSITION, torchPosition, 0);
+    
+    //Set torch direction (facing outwards from avatar)
+    float[] torchDirection = {(float)Math.cos(Math.toRadians(cameraRotation)), 0.0f, (float)Math.sin(Math.toRadians(cameraRotation))};
+    gl.glLightfv(GL2.GL_LIGHT2, GL2.GL_SPOT_DIRECTION, torchDirection, 0); //direction vector
+  
+    //Set cut off and attenuation
+    gl.glLightf(GL2.GL_LIGHT2, GL2.GL_SPOT_CUTOFF, 45.0f); //cutoff angle
+    gl.glLightf(GL2.GL_LIGHT2, GL2.GL_SPOT_EXPONENT, 0.0f); //attenuation
     
     gl.glPopMatrix();
   }
@@ -304,8 +359,6 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
    * We only need to do this once.
    */
   private void setupTextures() {
-    System.out.println("Switching to texture pack #: " + this.curTexturePack);
-    
     switch(this.curTexturePack) {
       case 0:
         //Default
@@ -395,12 +448,16 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         //Cycle through texture packs
         ++curTexturePack;
         curTexturePack %= NUM_TEXTURE_PACKS; //handle overflow
+  
+        System.out.println("Switching to texture pack #: " + this.curTexturePack);
       }
       break;
       case KeyEvent.VK_L:
       {
         //Toggle lighting
         this.curLighting = !this.curLighting;
+  
+        System.out.println("Lighting: " + ((this.curLighting) ? "ENABLED" : "DISABLED"));
       }
       break;
       case KeyEvent.VK_T:
@@ -419,6 +476,14 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
           this.fragmentShaderColourMode = FRAGMENT_SHADER_MODE.COLOUR;
         
         System.out.println("Fragment Colour Mode: " + ((this.fragmentShaderColourMode == FRAGMENT_SHADER_MODE.COLOUR) ? "COLOURS" : "TEXTURES"));
+      }
+      break;
+      case KeyEvent.VK_N:
+      {
+        //Toggle night mode
+        this.nightMode = !this.nightMode;
+        
+        System.out.println("Night mode: " + ((this.nightMode) ? "ENABLED" : "DISABLED"));
       }
       break;
       default:

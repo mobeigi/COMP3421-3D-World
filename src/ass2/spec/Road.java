@@ -185,7 +185,6 @@ public class Road {
     gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_DIFFUSE, diffuse, 0);
     gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SPECULAR, specular, 0);
     
-    
     gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_FILL);
     
     for (double t = 0.0; t < roadDistance; t += step) {
