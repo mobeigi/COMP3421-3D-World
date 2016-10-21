@@ -9,6 +9,8 @@ in vec2 vertexTextures;
 out vec3 V;
 out vec3 N;
 
+out vec2 textureCoords;
+
 void main(void) {
   //Set output vertex position
   gl_Position =  gl_ModelViewProjectionMatrix * vec4(vertexPosition, 1.0);
@@ -21,6 +23,7 @@ void main(void) {
   //Pass gl colour through
   gl_FrontColor = gl_Color;
   gl_BackColor = gl_Color;
+
+  textureCoords = vertexTextures;
+
 }
-
-

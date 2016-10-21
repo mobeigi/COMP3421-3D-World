@@ -3,6 +3,9 @@ package ass2.spec;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.util.GLBuffers;
+import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureCoords;
+
 import java.nio.FloatBuffer;
 
 /**
@@ -57,7 +60,7 @@ public class Enemy {
   }
   
   
-  public void draw(GL2 gl, TexturePack texturePack, int shaderProgram) {
+  public void draw(GL2 gl, TexturePack texturePack, int shaderProgram, Game.FRAGMENT_SHADER_MODE fragmentShaderColourMode, boolean curLighting) {
     gl.glPushMatrix();
     
     //Setup if it hasn't already happened
@@ -81,20 +84,32 @@ public class Enemy {
     gl.glEnableVertexAttribArray(vertexNormalID);
     gl.glVertexAttribPointer(vertexNormalID, 3, GL.GL_FLOAT, false, 0, 0);
     
-    
     gl.glBindBuffer(GL.GL_ARRAY_BUFFER, textureVboId);
     int vertexTextureID = gl.glGetAttribLocation(shaderProgram, "vertexTextures");
     gl.glEnableVertexAttribArray(vertexTextureID);
     gl.glVertexAttribPointer(vertexTextureID, 2, GL.GL_FLOAT, false, 0, 0);
+  
+    //Determine if lighting will be used when rendering
+    int lightingEnabledID = gl.glGetUniformLocation(shaderProgram, "lightingEnabled");
+    gl.glUniform1i(lightingEnabledID, (curLighting) ? 1 : 0);
+    
+    //Determine if textures will be used or if colours will be used
+    int textureModeID = gl.glGetUniformLocation(shaderProgram, "textureMode");
+    gl.glUniform1i(textureModeID, (fragmentShaderColourMode == Game.FRAGMENT_SHADER_MODE.TEXTURE)? 1 : 0);
+  
+    //Setup which texture to use
+    int textureID = gl.glGetUniformLocation(shaderProgram, "textureID");
+    gl.glActiveTexture(GL.GL_TEXTURE0);
+    gl.glUniform1i(textureID, 0); //0 for GL_TEXTURE0
     
     //Set sun position
     int sunID = gl.glGetUniformLocation(shaderProgram, "sunPosition");
     gl.glUniform3fv(sunID, 1, myTerrain.getSunlight(), 0);
     
     //Set various lighting modes
-    float[] ambient = {0.1f, 0.1f, 0.1f, 1.0f};
-    float[] diffuse = {0.25f, 0.25f, 0.25f, 1.0f};
-    float[] specular = {0.1f, 0.1f, 0.1f, 1.0f};
+    float[] ambient = {0.2f, 0.2f, 0.2f, 1.0f};
+    float[] diffuse = {1.0f, 1.0f, 1.0f, 1.0f};
+    float[] specular = {0.0f, 0.0f, 0.0f, 1.0f};
   
     gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_AMBIENT, ambient, 0);
     gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_DIFFUSE, diffuse, 0);
@@ -107,7 +122,12 @@ public class Enemy {
     //Body
     gl.glPushMatrix();
     {
+      //Set Texture
+      Texture texture = texturePack.getEnemyBody();
+      gl.glBindTexture(GL.GL_TEXTURE_2D, texture.getTextureObject());
+      
       gl.glColor4f(0.098039f, 0.066666f, 0.12549f, 1.0f);
+      
       gl.glScaled(0.5, 0.5, 0.5);
       drawSphereWithDrawArrays(gl);
     }
@@ -116,7 +136,11 @@ public class Enemy {
     //Left Eye
     gl.glPushMatrix();
     {
+      Texture texture = texturePack.getEnemyEyes();
+      gl.glBindTexture(GL.GL_TEXTURE_2D, texture.getTextureObject());
+      
       gl.glColor4f(0.9f, 0.9f, 0.9f, 1.0f);
+      
       gl.glTranslated(-0.08, 0.06, -0.15);
       gl.glScaled(0.08, 0.08, 0.08);
       drawSphereWithDrawArrays(gl);
@@ -126,9 +150,14 @@ public class Enemy {
     //Right Eye
     gl.glPushMatrix();
     {
+      Texture texture = texturePack.getEnemyEyes();
+      gl.glBindTexture(GL.GL_TEXTURE_2D, texture.getTextureObject());
+      
       gl.glColor4f(0.9f, 0.9f, 0.9f, 1.0f);
+      
       gl.glTranslated(0.08, 0.06, -0.15);
       gl.glScaled(0.08, 0.08, 0.08);
+      
       drawSphereWithDrawArrays(gl);
     }
     gl.glPopMatrix();
@@ -136,7 +165,12 @@ public class Enemy {
     //Mouth
     gl.glPushMatrix();
     {
+      //Set Texture
+      Texture texture = texturePack.getEnemyMouth();
+      gl.glBindTexture(GL.GL_TEXTURE_2D, texture.getTextureObject());
+      
       gl.glColor4f(0.9f, 0.2f, 0.2f, 1.0f);
+      
       gl.glTranslated(0.0, -0.06, -0.18);
       gl.glRotated(-20.0, 1.0, 0.0, 0.0);
       gl.glScaled(0.15, 0.15, 0.05);;
@@ -207,10 +241,8 @@ public class Enemy {
         sphereVertexBuffer.put( (float)(radius*y2) );
         sphereVertexBuffer.put( (float)(radius*z2) );
         
-        
-        sphereTextureBuffer.put((float)(1/slices * i));
-        sphereTextureBuffer.put((float)(1/stacks * (j+1)));
-        
+        sphereTextureBuffer.put((float)(1.0/slices * i)); //from uvSphere function from source
+        sphereTextureBuffer.put((float)(1.0/stacks * (j+1)));
         
         sphereNormalBuffer.put( (float)x1 );
         sphereNormalBuffer.put( (float)y1 );
@@ -219,8 +251,8 @@ public class Enemy {
         sphereVertexBuffer.put( (float)(radius*y1) );
         sphereVertexBuffer.put( (float)(radius*z1) );
         
-        sphereTextureBuffer.put((float)(1/slices * i));
-        sphereTextureBuffer.put((float)(1/stacks * j));
+        sphereTextureBuffer.put((float)(1.0/slices * i)); //from uvSphere function from source
+        sphereTextureBuffer.put((float)(1.0/stacks * j));
       }
     }
     
@@ -229,6 +261,7 @@ public class Enemy {
       sphereNormalArray[i] = sphereNormalBuffer.get(i);
     }
     
+    //We only have 2/3rds of size in texture buffer
     for (int i = 0; i < size*2/3; i++){
       sphereTextureArray[i] = sphereTextureBuffer.get(i);
     }
@@ -238,7 +271,7 @@ public class Enemy {
     sphereTextureBuffer.rewind();
     
     int[] bufferIDs = new int[3];
-    gl.glGenBuffers(3, bufferIDs,0);
+    gl.glGenBuffers(3, bufferIDs, 0);
     vertexVboId = bufferIDs[0];
     normalVboId = bufferIDs[1];
     textureVboId = bufferIDs[2];
@@ -248,7 +281,7 @@ public class Enemy {
     gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, normalVboId);
     gl.glBufferData(GL2.GL_ARRAY_BUFFER, size*4, sphereNormalBuffer, GL2.GL_STATIC_DRAW);
     gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, textureVboId);
-    gl.glBufferData(GL2.GL_ARRAY_BUFFER, size*4, sphereTextureBuffer, GL2.GL_STATIC_DRAW);
+    gl.glBufferData(GL2.GL_ARRAY_BUFFER, size* (8/3), sphereTextureBuffer, GL2.GL_STATIC_DRAW);
     gl.glBindBuffer(GL.GL_ARRAY_BUFFER, 0);
   }
   

@@ -8,6 +8,9 @@ public class TexturePack {
   private Texture treeLeaves;
   private Texture road;
   private Texture avatar;
+  private Texture enemyBody;
+  private Texture enemyEyes;
+  private Texture enemyMouth;
   
   public Texture getTerrain() {
     return terrain;
@@ -47,5 +50,29 @@ public class TexturePack {
   
   public void setAvatar(Texture avatar) {
     this.avatar = avatar;
+  }
+  
+  public Texture getEnemyBody() {
+    return enemyBody;
+  }
+  
+  public void setEnemyBody(Texture enemyBody) {
+    this.enemyBody = enemyBody;
+  }
+  
+  public Texture getEnemyEyes() {
+    return enemyEyes;
+  }
+  
+  public void setEnemyEyes(Texture enemyEyes) {
+    this.enemyEyes = enemyEyes;
+  }
+  
+  public Texture getEnemyMouth() {
+    return enemyMouth;
+  }
+  
+  public void setEnemyMouth(Texture enemyMouth) {
+    this.enemyMouth = enemyMouth;
   }
 }

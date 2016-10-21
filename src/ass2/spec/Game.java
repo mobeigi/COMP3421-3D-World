@@ -46,6 +46,10 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   
   //Shader
   private int shaderProgram;
+  private FRAGMENT_SHADER_MODE fragmentShaderColourMode;
+  public enum FRAGMENT_SHADER_MODE {
+    COLOUR, TEXTURE
+  }
   
   //Enemy
   Enemy enemy;
@@ -77,6 +81,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     curTexturePack = prevTexturePack = 0;
     curLighting = prevLighting = true;
     thirdPerson = false;
+    fragmentShaderColourMode = FRAGMENT_SHADER_MODE.COLOUR;
   }
   
   /**
@@ -145,7 +150,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     }
     
     //Draw terrain including enemy
-    myTerrain.draw(gl, texturePack, shaderProgram);
+    myTerrain.draw(gl, texturePack, shaderProgram, fragmentShaderColourMode, curLighting);
     
     //Draw avatar
     if (thirdPerson) {
@@ -310,6 +315,11 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
           texturePack.setTreeLeaves(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/tree_leaves.jpg"), true, TextureIO.JPG));
           texturePack.setRoad(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/asphalt.png"), true, TextureIO.PNG));
           texturePack.setAvatar(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/circular_gold.jpg"), true, TextureIO.JPG));
+          
+          texturePack.setEnemyBody(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_body.jpg"), true, TextureIO.JPG));
+          texturePack.setEnemyEyes(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_eye.jpg"), true, TextureIO.JPG));
+          texturePack.setEnemyMouth(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_mouth.png"), true, TextureIO.PNG));
+          
         } catch (IOException e) {
           //File may not exist
           e.printStackTrace();
@@ -323,6 +333,10 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
           texturePack.setTreeLeaves(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/autumn_leaves.jpg"), true, TextureIO.JPG));
           texturePack.setRoad(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/lava_crack.jpg"), true, TextureIO.JPG));
           texturePack.setAvatar(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/circular_gold.jpg"), true, TextureIO.JPG));
+  
+          texturePack.setEnemyBody(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_body.jpg"), true, TextureIO.JPG));
+          texturePack.setEnemyEyes(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_eye.jpg"), true, TextureIO.JPG));
+          texturePack.setEnemyMouth(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_mouth.png"), true, TextureIO.PNG));
         } catch (IOException e) {
           //File may not exist
           e.printStackTrace();
@@ -394,6 +408,17 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
         //Toggle third person mode
         this.thirdPerson = !this.thirdPerson;
         System.out.println("Thirdperson View: " + ((this.thirdPerson) ? "ENABLED" : "DISABLED"));
+      }
+      break;
+      case KeyEvent.VK_F:
+      {
+        //Toggle fragment shader colour mode (colour/texture)
+        if (this.fragmentShaderColourMode == FRAGMENT_SHADER_MODE.COLOUR)
+          this.fragmentShaderColourMode = FRAGMENT_SHADER_MODE.TEXTURE;
+        else
+          this.fragmentShaderColourMode = FRAGMENT_SHADER_MODE.COLOUR;
+        
+        System.out.println("Fragment Colour Mode: " + ((this.fragmentShaderColourMode == FRAGMENT_SHADER_MODE.COLOUR) ? "COLOURS" : "TEXTURES"));
       }
       break;
       default:
