@@ -2,7 +2,7 @@
 
 // Based on tutorial from: https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/lighting.php
 
-uniform vec3 sunPosition;
+uniform vec3 lightPosition;
 uniform bool textureMode;
 uniform bool lightingEnabled;
 
@@ -17,7 +17,7 @@ void main (void) {
   
   if (lightingEnabled) {
     //Gather required variables
-    vec3 L = normalize(sunPosition - V); //normalise light source
+    vec3 L = normalize(lightPosition - V); //normalise light source
     vec3 E = normalize(-V); // we are in Eye Coordinates, so EyePos is (0,0,0)
     vec3 R = normalize(-reflect(L, N));  
     

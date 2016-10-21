@@ -14,7 +14,10 @@
 	],
   
   "enemies" : [
-		{ "x" : 2.0, "z" : 2.0 , "rotation" : 45.0},
-    { "x" : 4.0, "z" : 4.0 , "rotation" : 45.0},
+    { "x" : 3.0, "z" : 4.0 , "rotation" : 45.0},
+	],
+  
+  "portals" : [
+		{ "firstX" : 1.0, "firstZ" : 4.0 , "firstRotation" : 135.0, "secondX" : 1.0, "secondZ" : 1.0 , "secondRotation" : 45.0},
 	]
 }

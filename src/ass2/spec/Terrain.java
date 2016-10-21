@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
 /**
  * COMMENT: Comment HeightMap 
  *
@@ -25,6 +24,7 @@ public class Terrain {
   private List<Enemy> myEnemies;
   private List<Road> myRoads;
   private float[] mySunlight;
+  private List<PortalPair> myPortalPairs;
   
   /**
    * Create a new terrain
@@ -39,6 +39,7 @@ public class Terrain {
     myEnemies = new ArrayList<Enemy>();
     myRoads = new ArrayList<Road>();
     mySunlight = new float[3];
+    myPortalPairs = new ArrayList<PortalPair>();
   }
   
   public Terrain(Dimension size) {
@@ -55,6 +56,10 @@ public class Terrain {
   
   public List<Enemy> enemies() {
     return myEnemies;
+  }
+  
+  public List<PortalPair> portalpairs() {
+    return myPortalPairs;
   }
   
   public List<Road> roads() {
@@ -311,6 +316,11 @@ public class Terrain {
       enemy.draw(gl, texturePack, shaderProgram, fragmentShaderColourMode, curLighting, nightMode, torchPosition);
     }
     
+    //Draw all portal pairs
+    for (PortalPair pp : myPortalPairs) {
+      pp.draw(gl, texturePack);
+    }
+    
     gl.glPopAttrib();
     gl.glPopMatrix();
   }
@@ -325,6 +335,22 @@ public class Terrain {
   public void addEnemy(double x, double z, double rotation) {
     Enemy enemy = new Enemy(this, x, z, rotation);
     myEnemies.add(enemy);
+  }
+  
+  /**
+   * Add a portal pair to the terrain.
+   *
+   * @param firstX x axis of first portal
+   * @param firstZ z axis of first portal
+   * @param firstRotation rotation (along y axis) that first portal should be facing
+   * @param secondX x axis of second portal
+   * @param secondZ z axis of second portal
+   * @param secondRotation rotation (along y axis) that second portal should be facing
+   */
+  public void addPortalPair(double firstX, double firstZ, double firstRotation,
+                            double secondX, double secondZ, double secondRotation) {
+    PortalPair pp = new PortalPair(this, firstX, firstZ, firstRotation, secondX, secondZ, secondRotation);
+    myPortalPairs.add(pp);
   }
   
 }

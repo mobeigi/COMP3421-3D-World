@@ -11,6 +11,8 @@ public class TexturePack {
   private Texture enemyBody;
   private Texture enemyEyes;
   private Texture enemyMouth;
+  private Texture bluePortal;
+  private Texture orangePortal;
   
   public Texture getTerrain() {
     return terrain;
@@ -75,4 +77,21 @@ public class TexturePack {
   public void setEnemyMouth(Texture enemyMouth) {
     this.enemyMouth = enemyMouth;
   }
+  
+  public Texture getBluePortal() {
+    return bluePortal;
+  }
+  
+  public void setBluePortal(Texture bluePortal) {
+    this.bluePortal = bluePortal;
+  }
+  
+  public Texture getOrangePortal() {
+    return orangePortal;
+  }
+  
+  public void setOrangePortal(Texture orangePortal) {
+    this.orangePortal = orangePortal;
+  }
+  
 }

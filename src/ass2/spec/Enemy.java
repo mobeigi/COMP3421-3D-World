@@ -104,7 +104,7 @@ public class Enemy {
     gl.glUniform1i(textureID, 0); //0 for GL_TEXTURE0
     
     //Set sun position
-    int sunID = gl.glGetUniformLocation(shaderProgram, "sunPosition");
+    int sunID = gl.glGetUniformLocation(shaderProgram, "lightPosition");
     
     //If night mode, the sun is the position of the camera (spotlight)
     if (nightMode)
@@ -122,7 +122,7 @@ public class Enemy {
     gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SPECULAR, specular, 0);
     
     //Draw the enemy model
-    gl.glTranslated(myPos[0], myTerrain.altitude(myPos[0], myPos[1]) + 0.5, myPos[1]);
+    gl.glTranslated(myPos[0], myTerrain.altitude(myPos[0], myPos[1]) + Game.ALTITUDE_OFFSET, myPos[1]);
     gl.glRotated(myRotation, 0, 1.0, 0);
     
     //Body
@@ -147,7 +147,7 @@ public class Enemy {
       
       gl.glColor4f(0.9f, 0.9f, 0.9f, 1.0f);
       
-      gl.glTranslated(-0.08, 0.06, -0.15);
+      gl.glTranslated(-0.08, 0.06, 0.15);
       gl.glScaled(0.08, 0.08, 0.08);
       drawSphereWithDrawArrays(gl);
     }
@@ -161,7 +161,7 @@ public class Enemy {
       
       gl.glColor4f(0.9f, 0.9f, 0.9f, 1.0f);
       
-      gl.glTranslated(0.08, 0.06, -0.15);
+      gl.glTranslated(0.08, 0.06, 0.15);
       gl.glScaled(0.08, 0.08, 0.08);
       
       drawSphereWithDrawArrays(gl);
@@ -177,9 +177,9 @@ public class Enemy {
       
       gl.glColor4f(0.9f, 0.2f, 0.2f, 1.0f);
       
-      gl.glTranslated(0.0, -0.06, -0.18);
+      gl.glTranslated(0.0, -0.06, 0.18);
       gl.glRotated(-20.0, 1.0, 0.0, 0.0);
-      gl.glScaled(0.15, 0.15, 0.05);;
+      gl.glScaled(0.15, 0.15, 0.05);
       drawSphereWithDrawArrays(gl);
     }
     gl.glPopMatrix();
@@ -265,10 +265,6 @@ public class Enemy {
     for (int i = 0; i < size; i++) {
       sphereVertexArray[i] = sphereVertexBuffer.get(i);
       sphereNormalArray[i] = sphereNormalBuffer.get(i);
-    }
-    
-    //We only have 2/3rds of size in texture buffer
-    for (int i = 0; i < size*2/3; i++){
       sphereTextureArray[i] = sphereTextureBuffer.get(i);
     }
     
@@ -287,7 +283,7 @@ public class Enemy {
     gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, normalVboId);
     gl.glBufferData(GL2.GL_ARRAY_BUFFER, size*4, sphereNormalBuffer, GL2.GL_STATIC_DRAW);
     gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, textureVboId);
-    gl.glBufferData(GL2.GL_ARRAY_BUFFER, size* (8/3), sphereTextureBuffer, GL2.GL_STATIC_DRAW);
+    gl.glBufferData(GL2.GL_ARRAY_BUFFER, size*4, sphereTextureBuffer, GL2.GL_STATIC_DRAW);
     gl.glBindBuffer(GL.GL_ARRAY_BUFFER, 0);
   }
   

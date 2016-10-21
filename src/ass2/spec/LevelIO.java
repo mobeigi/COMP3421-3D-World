@@ -71,6 +71,22 @@ public class LevelIO {
         terrain.addEnemy(x, z, rotation);
       }
     }
+  
+    if (jsonTerrain.has("portals")) {
+      JSONArray jsonPortalPairs = jsonTerrain.getJSONArray("portals");
+      for (int i = 0; i < jsonPortalPairs.length(); i++) {
+        JSONObject jsonPortalPair = jsonPortalPairs.getJSONObject(i);
+        double firstX = jsonPortalPair.getDouble("firstX");
+        double firstZ = jsonPortalPair.getDouble("firstZ");
+        double firstRotation = jsonPortalPair.getDouble("firstRotation");
+  
+        double secondX = jsonPortalPair.getDouble("secondX");
+        double secondZ = jsonPortalPair.getDouble("secondZ");
+        double secondRotation = jsonPortalPair.getDouble("secondRotation");
+        
+        terrain.addPortalPair(firstX, firstZ, firstRotation, secondX, secondZ, secondRotation);
+      }
+    }
     
     if (jsonTerrain.has("roads")) {
       JSONArray jsonRoads = jsonTerrain.getJSONArray("roads");
@@ -139,6 +155,26 @@ public class LevelIO {
       enemies.put(j);
     }
     json.put("enemies", enemies);
+  
+    JSONArray portalpairs = new JSONArray();
+    for (PortalPair pp : terrain.portalpairs()) {
+      JSONObject j = new JSONObject();
+      double[] firstPosition = pp.getFirst().getMyPos();
+      double firstRotation = pp.getFirst().getMyRotation();
+  
+      double[] secondPosition = pp.getSecond().getMyPos();
+      double secondRotation = pp.getFirst().getMyRotation();
+      
+      j.put("firstX", firstPosition[0]);
+      j.put("firstZ", firstPosition[1]);
+      j.put("firstRotation", firstRotation);
+  
+      j.put("secondX", secondPosition[0]);
+      j.put("secondZ", secondPosition[1]);
+      j.put("secondRotation", secondRotation);
+      portalpairs.put(j);
+    }
+    json.put("portals", portalpairs);
     
     JSONArray roads = new JSONArray();
     for (Road r : terrain.roads()) {

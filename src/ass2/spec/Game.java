@@ -60,7 +60,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   //Constants
   private static final double FIELD_OF_VIEW = 60.0; //field of view to use in world
   private static final double MAXIMUM_FIELD_OF_VIEW = 180.0; //max possible value for field of view
-  private static final double ALTITUDE_OFFSET = 0.5; //camera offset from ground so world is visible
+  public static final double ALTITUDE_OFFSET = 0.5; //camera offset from ground so world is visible
   private static final double THIRDPERSON_ALTITUDE_CHANGE = 1.0; //how much to change altitude of camera in third person view
   private static final double WALKING_SPEED = 0.1; //speed at which player (camera) moves at
   private static final double CAMERA_DEFAULT_ROTATION = 45.0; //camera default rotation
@@ -69,6 +69,8 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   private static final String VERTEX_SHADER_GLSL = "/shader/AttributeVertex.glsl"; //path to vertex shader GLSL file
   private static final String FRAGMENT_SHADER_GLSL = "/shader/AttributeFragment.glsl"; //path to fragment shader GLSL file
   
+  private static final double PORTAL_MIN_PROXIMITY = 0.15; //how close must you get to a portal to be teleported
+  private static final double PORTAL_TELEPORT_PUSHBACK = 0.3; //how far you should be 'pushed' after teleporting from one portal to another
   
   public Game(Terrain terrain) {
     super("Assignment 2");
@@ -165,6 +167,10 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
       Avatar avatar = new Avatar(myTerrain, cameraPosition, cameraRotation);
       avatar.draw(gl, texturePack);
     }
+    
+    //Check if user is 'going through portal'
+    //If they are, teleport them to other portal
+    checkPortalPairs();
   }
   
   
@@ -355,6 +361,48 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
   }
   
   /**
+   * Check portal pairs to see if a teleport is required (from one portal to another)
+   *
+   */
+  private void checkPortalPairs() {
+    //Iterate through portal pairs
+    for (PortalPair pp : myTerrain.portalpairs()) {
+      Portal first = pp.getFirst();
+      Portal second = pp.getSecond();
+      
+      double[] firstPos = first.getMyPos();
+      double[] secondPos = second.getMyPos();
+      double firstRotation = first.getMyRotation();
+      double secondRotation = second.getMyRotation();
+      
+      //Teleport to opposite portal in pair
+      if (insidePortal(firstPos)) {
+        //Transport to other portal
+        cameraPosition[0] = secondPos[0] + (Math.cos(Math.toRadians(-secondRotation)) * PORTAL_TELEPORT_PUSHBACK);
+        cameraPosition[1] = secondPos[1] + (Math.sin(Math.toRadians(-secondRotation)) * PORTAL_TELEPORT_PUSHBACK);
+      } else if (insidePortal(secondPos)) {
+        //Transport to other portal
+        cameraPosition[0] = firstPos[0] + (Math.cos(Math.toRadians(-firstRotation)) * PORTAL_TELEPORT_PUSHBACK);
+        cameraPosition[1] = firstPos[1] + (Math.sin(Math.toRadians(-firstRotation)) * PORTAL_TELEPORT_PUSHBACK);
+      }
+    }
+  }
+  
+  /**
+   * Helper function. Acts as very native collection detection along (x,z) axes.
+   * @param portalPos position of a portal
+   * @return true if colliding with the player (avatar/camera), false otherwise
+   */
+  private boolean insidePortal(double[] portalPos) {
+    
+    if (Math.abs(cameraPosition[0] - portalPos[0]) <= PORTAL_MIN_PROXIMITY &&
+        Math.abs(cameraPosition[1] - portalPos[1]) <= PORTAL_MIN_PROXIMITY)
+      return true;
+    
+    return false;
+  }
+  
+  /**
    * Setup and read in textures to be used later.
    * We only need to do this once.
    */
@@ -373,6 +421,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
           texturePack.setEnemyEyes(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_eye.jpg"), true, TextureIO.JPG));
           texturePack.setEnemyMouth(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_mouth.png"), true, TextureIO.PNG));
           
+          texturePack.setBluePortal(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/blue_portal.jpg"), true, TextureIO.JPG));
+          texturePack.setOrangePortal(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/orange_portal.jpg"), true, TextureIO.JPG));
+          
         } catch (IOException e) {
           //File may not exist
           e.printStackTrace();
@@ -390,6 +441,9 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
           texturePack.setEnemyBody(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_body.jpg"), true, TextureIO.JPG));
           texturePack.setEnemyEyes(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_eye.jpg"), true, TextureIO.JPG));
           texturePack.setEnemyMouth(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/enemy_mouth.png"), true, TextureIO.PNG));
+  
+          texturePack.setBluePortal(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/blue_portal.jpg"), true, TextureIO.JPG));
+          texturePack.setOrangePortal(TextureIO.newTexture(this.getClass().getResourceAsStream("/textures/orange_portal.jpg"), true, TextureIO.JPG));
         } catch (IOException e) {
           //File may not exist
           e.printStackTrace();
