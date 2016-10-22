@@ -129,8 +129,6 @@ public class Terrain {
    * Get the altitude at an arbitrary point.
    * Non-integer points should be interpolated from neighbouring grid points
    *
-   * TODO: Check functionality, especially on edge cases (when x is inverse etc)
-   *
    * @param x point on x axis
    * @param z point on z axis
    * @return altitude at an arbitary point

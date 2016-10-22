@@ -7,6 +7,7 @@ import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureCoords;
 
 import java.nio.FloatBuffer;
+import java.util.Random;
 
 /**
  * Enemy object.
@@ -52,7 +53,8 @@ public class Enemy {
     this.myPos = new double[]{x, z};
     this.myRotation = rotation;
   
-    this.bounceTime = 0;
+    Random rand = new Random();
+    this.bounceTime = rand.nextInt() % 180;
     
     this.setupComplete = false;
   }

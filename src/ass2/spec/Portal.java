@@ -27,7 +27,7 @@ public class Portal {
     
     //Set positions and apply rotations
     gl.glTranslated(myPos[0], myTerrain.altitude(myPos[0], myPos[1]) + PORTAL_ALTITUDE_OFFSET, myPos[1]);
-    gl.glRotated(myRotation, 0, 1.0, 0);
+    gl.glRotated(-myRotation, 0, 1.0, 0);
     gl.glScaled(0.5, 0.8, 1.0);
   
     //Determine portal colour and texture based on portal number

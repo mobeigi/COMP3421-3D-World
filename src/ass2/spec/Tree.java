@@ -59,7 +59,7 @@ public class Tree {
       GLUquadric gluQuadratic = glu.gluNewQuadric();
       glu.gluQuadricTexture(gluQuadratic, true);
       glu.gluQuadricNormals(gluQuadratic, GLU.GLU_SMOOTH);
-      glu.gluCylinder(gluQuadratic, 0.05f, 0.05f, 0.8f, 60, 60); //TODO: optimize divisions
+      glu.gluCylinder(gluQuadratic, 0.05f, 0.05f, 0.8f, 60, 60);
   
       treeTrunk.disable(gl);
     }
@@ -87,7 +87,7 @@ public class Tree {
       GLUquadric gluQuadratic = glu.gluNewQuadric();
       glu.gluQuadricTexture(gluQuadratic, true);
       glu.gluQuadricNormals(gluQuadratic, GLU.GLU_SMOOTH);
-      glu.gluSphere(gluQuadratic, 0.25f, 60, 60); //TODO: optimize divisions
+      glu.gluSphere(gluQuadratic, 0.25f, 60, 60);
   
       treeLeaves.disable(gl);
     }

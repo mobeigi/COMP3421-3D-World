@@ -19,7 +19,7 @@ public class Road {
   private Terrain myTerrain;
   
   //Constants
-  private static final double DIVISION_FACTOR = 100; //the higher this is the more accurate/smooth road is
+  private static final double DIVISION_FACTOR = 75; //the higher this is the more accurate/smooth road is
                                                       //but also increases computation cost
   private static final double ALTITUDE_OFFSET = 0.015; //to combat 'Z-fighting' of terrain and road
   

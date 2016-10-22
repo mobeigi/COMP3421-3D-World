@@ -96,7 +96,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     nightMode = false;
     gameOver = false;
     gameOverMessageQueued = false;
-    playerName = "Player 1";
+    playerName = "";
   }
   
   /**
@@ -114,7 +114,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     playerName =  JOptionPane.showInputDialog(null, "What is your desired player name?", "Player Name Selection", JOptionPane.PLAIN_MESSAGE);
     
     // Add an animator to call 'display' at some interval
-    FPSAnimator animator = new FPSAnimator(60); //todo: up this for smoother movements
+    FPSAnimator animator = new FPSAnimator(60);
     animator.add(panel);
     animator.start();
     
@@ -221,11 +221,6 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     //Configure required options
     gl.glEnable(GL2.GL_DEPTH_TEST); //need Z axis taken into account
     gl.glEnable(GL2.GL_NORMALIZE); //automatically normalise our normals as we scale
-    
-    /*
-    gl.glEnable(GL2.GL_CULL_FACE);  //optimization to get rid of various fragments todo: enable
-    gl.glEnable(GL2.GL_BACK);
-    */
     
     gl.glEnable(GL2.GL_LIGHTING); //enable lighting
     
@@ -410,28 +405,46 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
       double secondRotation = second.getMyRotation();
       
       //Teleport to opposite portal in pair
-      if (collisionCheck(firstPos, PORTAL_MIN_PROXIMITY)) {
+      if (collisionCheck(cameraPosition, firstPos, PORTAL_MIN_PROXIMITY)) {
         //Transport to other portal
         cameraPosition[0] = secondPos[0] + (Math.cos(Math.toRadians(-secondRotation)) * PORTAL_TELEPORT_PUSHBACK);
         cameraPosition[1] = secondPos[1] + (Math.sin(Math.toRadians(-secondRotation)) * PORTAL_TELEPORT_PUSHBACK);
-      } else if (collisionCheck(secondPos, PORTAL_MIN_PROXIMITY)) {
+      } else if (collisionCheck(cameraPosition, secondPos, PORTAL_MIN_PROXIMITY)) {
         //Transport to other portal
         cameraPosition[0] = firstPos[0] + (Math.cos(Math.toRadians(-firstRotation)) * PORTAL_TELEPORT_PUSHBACK);
         cameraPosition[1] = firstPos[1] + (Math.sin(Math.toRadians(-firstRotation)) * PORTAL_TELEPORT_PUSHBACK);
+      }
+      
+      //Also check enemies
+      //They can travel through portals too!
+      for (Enemy e : myTerrain.enemies()) {
+        double[] enemyPos = e.getMyPos();
+        if (collisionCheck(enemyPos, firstPos, PORTAL_MIN_PROXIMITY)) {
+          //Transport to other portal
+          enemyPos[0] = secondPos[0] + (Math.cos(Math.toRadians(-secondRotation)) * PORTAL_TELEPORT_PUSHBACK);
+          enemyPos[1] = secondPos[1] + (Math.sin(Math.toRadians(-secondRotation)) * PORTAL_TELEPORT_PUSHBACK);
+        } else if (collisionCheck(enemyPos, secondPos, PORTAL_MIN_PROXIMITY)) {
+          //Transport to other portal
+          enemyPos[0] = firstPos[0] + (Math.cos(Math.toRadians(-firstRotation)) * PORTAL_TELEPORT_PUSHBACK);
+          enemyPos[1] = firstPos[1] + (Math.sin(Math.toRadians(-firstRotation)) * PORTAL_TELEPORT_PUSHBACK);
+        }
+        e.setMyPos(enemyPos);
       }
     }
   }
   
   /**
    * Helper function. Acts as very native collection detection along (x,z) axes.
+   *
+   * @param target target to test
    * @param position position of test object
    * @param epsilon value determining how precise collision check is
    * @return true if colliding, false otherwise
    */
-  private boolean collisionCheck(double[] position, double epsilon) {
+  private boolean collisionCheck(double target[], double[] position, double epsilon) {
     
-    if (Math.abs(cameraPosition[0] - position[0]) <= epsilon &&
-        Math.abs(cameraPosition[1] - position[1]) <= epsilon)
+    if (Math.abs(target[0] - position[0]) <= epsilon &&
+        Math.abs(target[1] - position[1]) <= epsilon)
       return true;
     
     return false;
@@ -442,7 +455,7 @@ public class Game extends JFrame implements GLEventListener, KeyListener {
     for (Enemy e : myTerrain.enemies()) {
       double[] enemyPosition = e.getMyPos();
       //Check to see if enemy is close enough to be looked at
-      if (collisionCheck(enemyPosition, ENEMY_AWARE_PROXIMITY)) {
+      if (collisionCheck(cameraPosition, enemyPosition, ENEMY_AWARE_PROXIMITY)) {
         //Make enemy look at player
         double directionToEnemy = Math.toDegrees(Math.atan2(cameraPosition[0] - enemyPosition[0], cameraPosition[1] - enemyPosition[1]));
         e.setMyRotation(-directionToEnemy);
